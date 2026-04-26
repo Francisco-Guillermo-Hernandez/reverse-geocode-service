@@ -27,7 +27,10 @@ func main() {
 	handler := api.NewGeocodeHandler(searcher)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/geocode", handler.HandleGeocode)
+
+
+	mux.HandleFunc("/geocode", handler.HandleGeocode)
+	mux.HandleFunc("/search-city", handler.HandleSearchCity)
 
 	port := os.Getenv("PORT")
 	if port == "" {
