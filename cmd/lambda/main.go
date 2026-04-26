@@ -28,18 +28,16 @@ func init() {
 	g = api.NewGeocodeHandler(searcher)
 }
 
-func LambdaHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, request.HTTPMethod, request.Path, nil)
+func LambdaHandler(ctx context.Context, request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, request.RequestContext.HTTP.Method, request.RawPath, nil)
 	if err != nil {
-		return events.APIGatewayProxyResponse{StatusCode: 500, Body: "Invalid request"}, err
+		return events.APIGatewayV2HTTPResponse{StatusCode: 500, Body: "Invalid request"}, err
 	}
 
-	// Copiar headers de AWS a http.Request
 	req.Header = make(http.Header)
 	for key, value := range request.Headers {
 		req.Header.Add(key, value)
 	}
-	// Map query parameters
 	q := req.URL.Query()
 	for k, v := range request.QueryStringParameters {
 		q.Add(k, v)
@@ -48,24 +46,22 @@ func LambdaHandler(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 	w := httptest.NewRecorder()
 
-	// Route based on path
-	switch request.Path {
-	case "/geocode", "/api/v1/geocode":
+	switch request.RawPath {
+	case "/geocode":
 		g.HandleGeocode(w, req)
-	case "/search-city", "/api/v1/search-city":
+	case "/search-city":
 		g.HandleSearchCity(w, req)
 	default:
-		return events.APIGatewayProxyResponse{StatusCode: 404, Body: "Not Found"}, nil
+		return events.APIGatewayV2HTTPResponse{StatusCode: 404, Body: "Not Found"}, nil
 	}
 
-	// 6. Convertir la respuesta de Go a respuesta de AWS Lambda
 	bodyStr := w.Body.String()
 	headerMap := make(map[string]string)
 	for k, v := range w.Header() {
-		headerMap[k] = v[0] // Usamos el primer valor si hay múltiples
+		headerMap[k] = v[0] 
 	}
 
-	return events.APIGatewayProxyResponse{
+	return events.APIGatewayV2HTTPResponse{
 		StatusCode: w.Code,
 		Headers:    headerMap,
 		Body:       bodyStr,
