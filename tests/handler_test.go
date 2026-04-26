@@ -26,6 +26,19 @@ func (m *mockSearcher) Search(lat, lng float64) domain.Location {
 	return domain.Location{}
 }
 
+func (m *mockSearcher) SearchCityByName(cityName string, countryCode string) domain.Location {
+	if cityName == "Melbourne" && countryCode == "AU" {
+		return domain.Location{
+			City:        "Melbourne",
+			CountryCode: "AU",
+			Country:     "Australia",
+			Latitude:    -37.81,
+			Longitude:   144.96,
+		}
+	}
+	return domain.Location{}
+}
+
 func TestGeocodeHandler_HandleGeocode(t *testing.T) {
 	searcher := &mockSearcher{}
 	handler := api.NewGeocodeHandler(searcher)
