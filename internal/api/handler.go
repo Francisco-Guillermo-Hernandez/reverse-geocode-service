@@ -56,3 +56,25 @@ func (h *GeocodeHandler) HandleGeocode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *GeocodeHandler) HandleSearchCity(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cityName := r.URL.Query().Get("cityName")
+	countryCode := r.URL.Query().Get("countryCode")
+
+	if cityName == "" && countryCode == "" {
+		http.Error(w, "No location found", http.StatusNotFound)
+		return
+	}
+
+	location := h.searcher.SearchCityByName(cityName, countryCode)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(location); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
